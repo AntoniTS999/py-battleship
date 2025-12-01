@@ -104,7 +104,7 @@ class Battleship:
             raise ValueError("Field must contain exactly 10 ships.")
 
         # Sprawdzenie liczby statków wg wielkości
-        sizes: List[int] = [len(ship.decks) for ship in self.ships]
+        sizes = [len(ship.decks) for ship in self.ships]
         if sizes.count(1) != 4:
             raise ValueError("There must be 4 single-deck ships.")
         if sizes.count(2) != 3:
@@ -114,15 +114,13 @@ class Battleship:
         if sizes.count(4) != 1:
             raise ValueError("There must be 1 four-deck ship.")
 
-        # Sprawdzenie, czy statki się nie stykają
-        occupied: set[Tuple[int, int]] = set()
+        # Sprawdzenie bezpośredniego sąsiedztwa (tylko poziomo i pionowo)
+        occupied = set()
         for ship in self.ships:
-            for deck in ship.decks:
-                r, c = deck.row, deck.column
-                for dr in [-1, 0, 1]:
-                    for dc in [-1, 0, 1]:
-                        nr, nc = r + dr, c + dc
-                        if (nr, nc) in occupied:
-                            raise ValueError("Ships cannot touch each other, "
-                                             "even diagonally.")
-                occupied.add((r, c))
+            for dock in ship.decks:
+                ro, co = dock.row, dock.column
+                for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    if (ro + dr, co + dc) in occupied:
+                        raise ValueError("Ships cannot touch each "
+                                         "other horizontally or vertically.")
+                occupied.add((ro, co))
