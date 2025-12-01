@@ -58,10 +58,15 @@ class Battleship:
                  ships: List[Tuple[Tuple[int, int], Tuple[int, int]]]) \
             -> None:
         self.field: Dict[Tuple[int, int], Ship] = {}
+        self.ships: List[Ship] = []
+
         for start, end in ships:
             ship: Ship = Ship(start, end)
+            self.ships.append(ship)
             for deck in ship.decks:
                 self.field[(deck.row, deck.column)] = ship
+
+        self._validate_field()
 
     def fire(self, location: Tuple[int, int]) -> str:
         r, c = location
@@ -69,3 +74,55 @@ class Battleship:
             return "Miss!"
         ship: Ship = self.field[(r, c)]
         return ship.fire(r, c)
+
+    # ------------------- brakujące metody -------------------
+
+    def print_field(self) -> None:
+        size: int = 10
+        for ra in range(size):
+            row_str: List[str] = []
+            for co in range(size):
+                cell: Optional[Ship] = self.field.get((ra, co))
+                if cell is None:
+                    row_str.append("~")
+                else:
+                    deck = cell.get_deck(ra, co)
+                    if deck is None:
+                        row_str.append("~")
+                    elif deck.is_alive:
+                        row_str.append("□")
+                    elif not deck.is_alive and not cell.is_drowned:
+                        row_str.append("*")
+                    else:
+                        row_str.append("x")
+            print(" ".join(row_str))
+        print()
+
+    def _validate_field(self) -> None:
+        # Sprawdzenie liczby statków
+        if len(self.ships) != 10:
+            raise ValueError("Field must contain exactly 10 ships.")
+
+        # Sprawdzenie liczby statków wg wielkości
+        sizes: List[int] = [len(ship.decks) for ship in self.ships]
+        if sizes.count(1) != 4:
+            raise ValueError("There must be 4 single-deck ships.")
+        if sizes.count(2) != 3:
+            raise ValueError("There must be 3 double-deck ships.")
+        if sizes.count(3) != 2:
+            raise ValueError("There must be 2 triple-deck ships.")
+        if sizes.count(4) != 1:
+            raise ValueError("There must be 1 four-deck ship.")
+
+        # Sprawdzenie, czy statki się nie stykają
+        occupied: set[Tuple[int, int]] = set()
+        for ship in self.ships:
+            for deck in ship.decks:
+                r, c = deck.row, deck.column
+                for dr in [-1, 0, 1]:
+                    for dc in [-1, 0, 1]:
+                        nr, nc = r + dr, c + dc
+                        if (nr, nc) in occupied:
+                            raise ValueError("Ships cannot touch each other, "
+                                             "even diagonally.")
+                occupied.add((r, c))
