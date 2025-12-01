@@ -1,19 +1,20 @@
+from typing import Tuple, Dict, List, Optional
+
+
 class Deck:
     def __init__(self, row: int, column: int, is_alive: bool = True) -> None:
-        self.row = row
-        self.column = column
-        self.is_alive = is_alive
+        self.row: int = row
+        self.column: int = column
+        self.is_alive: bool = is_alive
 
 
 class Ship:
     def __init__(self,
-                 start: tuple[int],
-                 end: tuple[int],
+                 start: Tuple[int, int],
+                 end: Tuple[int, int],
                  is_drowned: bool = False) -> None:
-        self.start = start
-        self.end = end
-        self.is_drowned = is_drowned
-        self.decks = []
+        self.is_drowned: bool = is_drowned
+        self.decks: List[Deck] = []
 
         r1, c1 = start
         r2, c2 = end
@@ -27,45 +28,44 @@ class Ship:
         else:
             raise ValueError("Ships must be horizontal or vertical")
 
-    def get_deck(self, row: int, column: int) -> Deck | None:
+    def get_deck(self, row: int, column: int) -> Optional[Deck]:
         for deck in self.decks:
             if deck.row == row and deck.column == column:
                 return deck
         return None
 
-    def fire(self, row: int, column: int) -> bool:
-        deck = self.get_deck(row, column)
+    def fire(self, row: int, column: int) -> str:
+        deck: Optional[Deck] = self.get_deck(row, column)
         if deck is None:
             return "Miss!"
 
         if not deck.is_alive:
             if self.is_drowned:
                 return "Sunk!"
-            else:
-                return "Hit!"
+            return "Hit!"
 
         deck.is_alive = False
 
         if all(not d.is_alive for d in self.decks):
             self.is_drowned = True
             return "Sunk!"
-        else:
-            return "Hit!"
+
+        return "Hit!"
 
 
 class Battleship:
-    def __init__(self, ships: list) -> None:
-        self.ships = [Ship(start, end) for start, end in ships]
-        self.field = {}
-        for ship in self.ships:
+    def __init__(self,
+                 ships: List[Tuple[Tuple[int, int], Tuple[int, int]]]) \
+            -> None:
+        self.field: Dict[Tuple[int, int], Ship] = {}
+        for start, end in ships:
+            ship: Ship = Ship(start, end)
             for deck in ship.decks:
                 self.field[(deck.row, deck.column)] = ship
 
-    def fire(self, location: tuple) -> tuple:
+    def fire(self, location: Tuple[int, int]) -> str:
         r, c = location
-
         if (r, c) not in self.field:
             return "Miss!"
-
-        ship = self.field[(r, c)]
+        ship: Ship = self.field[(r, c)]
         return ship.fire(r, c)
